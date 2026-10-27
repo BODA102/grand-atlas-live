@@ -3,7 +3,6 @@ import { PropertyContext } from '../context/PropertyContext';
 import { Link } from 'react-router-dom';
 
 export default function ContactContent() {
-  // استدعاء الـ Context داخل المكون بالطريقة الصحيحة
   const data = useContext(PropertyContext);
 
   const [formData, setFormData] = useState({
@@ -26,7 +25,7 @@ export default function ContactContent() {
     <div className="w-full bg-white text-gray-900 font-sans pb-16">
       
       {/* 1. Hero Banner Section matching Figma */}
-      <div className="relative w-full h-90 md:h-105 bg-gray-900 mb-14 overflow-hidden flex items-center justify-center">
+      <div className="relative w-full min-h-105 md:h-105 bg-gray-900 mb-10 sm:mb-14 overflow-hidden flex items-center justify-center py-16">
         
         {/* Background Image with Overlay */}
         <div 
@@ -36,25 +35,25 @@ export default function ContactContent() {
         <div className="absolute inset-0 bg-linear-to-b from-black/60 via-black/40 to-black/70" />
 
         {/* Hero Content */}
-        <div className="relative z-10 text-center px-6 max-w-3xl">
-          <h1 className="font-serif font-bold text-3xl md:text-5xl text-white mb-3 tracking-wide">
-            Connected Globally. <br /> Available Locally.
+        <div className="relative z-10 text-center px-4 sm:px-6 max-w-3xl">
+          <h1 className="font-serif font-bold text-2xl sm:text-4xl md:text-5xl text-white mb-3 tracking-wide leading-tight">
+            Connected Globally. <br className="hidden sm:inline" /> Available Locally.
           </h1>
-          <p className="text-gray-200 text-xs md:text-sm leading-relaxed max-w-xl mx-auto">
+          <p className="text-gray-200 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto">
             With experts positioned in the world's most influential markets, we are never more than a conversation away. Reach out to our team to experience a new standard of real estate advisory. Total properties in system: {data?.properties?.length || 0}
           </p>
         </div>
       </div>
 
       {/* 2. Main Content Grid (Contact Info & Message Form) */}
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
           {/* Left Column: Contact Information & Working Hours */}
           <div className="lg:col-span-6 space-y-8">
             
             <div>
-              <h2 className="font-serif font-bold text-2xl text-gray-900 mb-3">
+              <h2 className="font-serif font-bold text-xl sm:text-2xl text-gray-900 mb-3">
                 Contact Information
               </h2>
               <p className="text-gray-500 text-xs leading-relaxed mb-6">
@@ -69,7 +68,7 @@ export default function ContactContent() {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <span className="text-[#8B1E22]">✉️</span>
-                  <span className="font-medium text-gray-900">Grand.Atlas.Support@gmail.com</span>
+                  <span className="font-medium text-gray-900 break-all">Grand.Atlas.Support@gmail.com</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <span className="text-[#8B1E22]">📞</span>
@@ -127,8 +126,8 @@ export default function ContactContent() {
           </div>
 
           {/* Right Column: Send Us a Message Form */}
-          <div className="lg:col-span-6 bg-gray-50/60 p-8 rounded-2xl border border-gray-200/80 shadow-sm">
-            <h3 className="font-serif font-bold text-xl text-gray-900 mb-6">
+          <div className="lg:col-span-6 bg-gray-50/60 p-6 sm:p-8 rounded-2xl border border-gray-200/80 shadow-sm">
+            <h3 className="font-serif font-bold text-lg sm:text-xl text-gray-900 mb-6">
               Send us a message
             </h3>
 
@@ -186,7 +185,7 @@ export default function ContactContent() {
 
               <button
                 type="submit"
-                className="w-full bg-[#8B1E22] hover:bg-[#72171A] text-white py-3 rounded-xl text-xs font-semibold transition-colors shadow-sm mt-2"
+                className="w-full bg-[#8B1E22] hover:bg-[#72171A] text-white py-3 rounded-xl text-xs font-semibold transition-colors shadow-sm mt-2 cursor-pointer"
               >
                 Send Message
               </button>

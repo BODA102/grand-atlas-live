@@ -21,28 +21,28 @@ export default function Zones() {
       
       {/* 1. HERO SECTION */}
       <section
-        className="relative w-full h-145 bg-cover bg-center flex items-center justify-center text-white px-6"
+        className="relative w-full min-h-112.5 md:h-145 bg-cover bg-center flex items-center justify-center text-white px-4 sm:px-6 py-20"
         style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('${zonesHeroBg}')` }}
       >
-        <div className="absolute left-8 hidden lg:flex flex-col gap-4 text-white">
+        <div className="absolute left-6 hidden xl:flex flex-col gap-4 text-white">
           <a href="#" className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-xs hover:bg-[#8B1E22] hover:border-[#8B1E22] transition-colors">f</a>
           <a href="#" className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-xs hover:bg-[#8B1E22] hover:border-[#8B1E22] transition-colors">𝕏</a>
           <a href="#" className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-xs hover:bg-[#8B1E22] hover:border-[#8B1E22] transition-colors">in</a>
           <a href="#" className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-xs hover:bg-[#8B1E22] hover:border-[#8B1E22] transition-colors">♪</a>
         </div>
 
-        <div className="text-center max-w-2xl">
-          <h1 className="font-serif text-3xl md:text-4xl font-bold mb-3 tracking-wide">
-            Destinations Defined by<br />Distinction
+        <div className="text-center max-w-2xl px-2">
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold mb-3 tracking-wide leading-tight">
+            Destinations Defined by<br className="hidden sm:inline" /> Distinction
           </h1>
-          <p className="text-xs md:text-sm text-gray-200 max-w-lg mx-auto leading-relaxed">
+          <p className="text-xs sm:text-sm text-gray-200 max-w-lg mx-auto leading-relaxed">
             From the quiet pulse of the shoreline to the vibrant energy of the metropolitan center, explore our guide to the neighborhoods that mirror your ambition and your aesthetic.
           </p>
         </div>
       </section>
 
       {/* 2. ZONES GRID (8 Cards layout matching Figma) */}
-      <section className="max-w-7xl mx-auto px-6 py-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {zonesList.map((zoneObj, index) => (
             <div

@@ -13,7 +13,6 @@ const galleryImages = [
 ];
 
 export default function DisplayUnit() {
-  // استدعاء الـ Context داخل دالة المكون بالطريقة الصحيحة
   const data = useContext(PropertyContext);
 
   const { id } = useParams();
@@ -47,11 +46,11 @@ export default function DisplayUnit() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans py-12">
-      <div className="max-w-7xl mx-auto px-6">
+    <div className="min-h-screen bg-white text-gray-900 font-sans py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         
         {/* 1. Main Showcase Image */}
-        <div className="w-full h-120 rounded-2xl overflow-hidden mb-4 shadow-sm border border-gray-200">
+        <div className="w-full h-72 sm:h-96 md:h-120 rounded-2xl overflow-hidden mb-4 shadow-sm border border-gray-200">
           <img 
             src={activeImg}
             alt="Unit Showcase"
@@ -60,12 +59,12 @@ export default function DisplayUnit() {
         </div>
 
         {/* 2. Gallery Thumbnails */}
-        <div className="grid grid-cols-5 gap-4 mb-10">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 sm:gap-4 mb-8 sm:mb-10">
           {galleryImages.map((imgSrc, index) => (
             <div
               key={index}
               onClick={() => setActiveImg(imgSrc)}
-              className={`h-24 rounded-xl overflow-hidden cursor-pointer border-2 transition-all shadow-sm ${
+              className={`h-20 sm:h-24 rounded-xl overflow-hidden cursor-pointer border-2 transition-all shadow-sm ${
                 activeImg === imgSrc ? 'border-[#8B1E22] scale-[1.02]' : 'border-gray-200 hover:border-gray-300'
               }`}
             >
@@ -79,9 +78,9 @@ export default function DisplayUnit() {
         </div>
 
         {/* 3. Title, Location & Price Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 mb-10 border-b border-gray-200">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 mb-8 sm:mb-10 border-b border-gray-200">
           <div>
-            <h1 className="font-serif text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">
               {unit?.title || "Splendid historic Art Nouveau villa"}
             </h1>
             <p className="text-gray-500 text-xs flex items-center gap-1.5">
@@ -89,17 +88,17 @@ export default function DisplayUnit() {
               {unit?.location || 'Minuso, Lake Maggiore, Switzerland — ref. LOC1771'}
             </p>
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-gray-900 mt-4 md:mt-0 font-serif">
+          <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mt-4 md:mt-0 font-serif">
             {unit?.price ? `${unit.price} EGP` : "50,000,000 EGP"}
           </div>
         </div>
 
         {/* 4. Details Grid (At a glance & Overview) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pb-16">
           
           {/* At a glance Sidebar */}
-          <div className="lg:col-span-5 bg-gray-50 p-6 rounded-2xl border border-gray-200 h-fit">
-            <h3 className="font-serif font-bold text-lg text-gray-900 mb-4 pb-3 border-b border-gray-200">
+          <div className="lg:col-span-5 bg-gray-50 p-5 sm:p-6 rounded-2xl border border-gray-200 h-fit">
+            <h3 className="font-serif font-bold text-base sm:text-lg text-gray-900 mb-4 pb-3 border-b border-gray-200">
               At a glance
             </h3>
             <ul className="space-y-3 text-xs text-gray-700">
@@ -136,13 +135,13 @@ export default function DisplayUnit() {
 
           {/* Overview & Action Buttons */}
           <div className="lg:col-span-7 space-y-6">
-            <h3 className="font-serif font-bold text-xl text-gray-900">Overview</h3>
-            <p className="text-gray-600 leading-relaxed text-xs md:text-sm">
+            <h3 className="font-serif font-bold text-lg sm:text-xl text-gray-900">Overview</h3>
+            <p className="text-gray-600 leading-relaxed text-xs sm:text-sm">
               {unit?.description || 'Nestled in a residential area of Minusio, this magnificent historic villa is for sale, fully renovated and ready to move in. The spacious living areas, flooded with natural light thanks to perfect sun exposure, create a unique and welcoming atmosphere. A well-maintained, low-maintenance garden provides the ideal setting for enjoying outdoor gatherings. Its proximity to essential services and public transport also makes the villa an ideal choice for families.'}
             </p>
 
             {/* Action Buttons (WhatsApp & Call) */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <a 
                 href="https://whatsapp.com"
                 target="_blank"
