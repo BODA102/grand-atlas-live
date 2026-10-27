@@ -12,7 +12,7 @@ export default function Navbar() {
 
   return (
     <div className="w-full fixed top-4 left-0 z-50 px-4 pointer-events-none">
-      <nav className="max-w-7xl mx-auto backdrop-blur-md bg-white/80 border border-gray-200/80 shadow-lg rounded-full py-3 px-6 md:px-8 flex items-center justify-between pointer-events-auto transition-all">
+      <nav className="max-w-7xl mx-auto backdrop-blur-md bg-white/ 00 border border-gray-200/80 shadow-lg rounded-full py-3 px-6 md:px-8 flex items-center justify-between pointer-events-auto transition-all">
         
         {/* 1. Logo on the left */}
         <Link to="/" className="flex items-center gap-2" onClick={closeMenu}>
