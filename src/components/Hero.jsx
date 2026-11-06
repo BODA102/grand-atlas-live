@@ -1,10 +1,6 @@
-import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
-import { PropertyContext } from '../context/PropertyContext';
+import React from 'react';
 
 export default function Hero({ bgImg, title, desc }) {
-  const data = useContext(PropertyContext);
-
   return (
     <section
       className="relative h-100 sm:h-112.5 md:h-125 bg-cover bg-center flex items-center justify-center text-white px-4 sm:px-6 pt-20"

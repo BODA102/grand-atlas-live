@@ -1,140 +1,40 @@
-import React, { useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PropertyContext } from '../context/PropertyContext';
+import api, { getDeveloperImage, getDeveloperLogo, getName, unwrapList } from '../services/api';
 
 export default function Developers() {
-  const data = useContext(PropertyContext);
+  const [developers, setDevelopers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const developersList = [
-    {
-      id: 1,
-      name: "PALM HILLS",
-      subName: "DEVELOPMENTS",
-      location: "New Cairo",
-      image: "/unit-img.jpg",
-      logoImg: "/palm.png"
-    },
-    {
-      id: 2,
-      name: "Hayah City",
-      subName: "Hayah Development",
-      location: "New Cairo",
-      image: "/City 2.jpg",
-      logoImg: "/Hayah.png"
-    },
-    {
-      id: 3,
-      name: "PALM HILLS",
-      subName: "DEVELOPMENTS",
-      location: "New Cairo",
-      image: "/unit-img.jpg",
-      logoImg: "/palm.png"
-    },
-    {
-      id: 4,
-      name: "PALM HILLS",
-      subName: "DEVELOPMENTS",
-      location: "New Cairo",
-      image: "/City 2.jpg",
-      logoImg: "/palm.png"
-    },
-    {
-      id: 5,
-      name: "Hayah City",
-      subName: "Hayah Development",
-      location: "New Cairo",
-      image: "/unit-img.jpg",
-      logoImg: "/Hayah.png"
-    },
-    {
-      id: 6,
-      name: "PALM HILLS",
-      subName: "DEVELOPMENTS",
-      location: "New Cairo",
-      image: "/City 2.jpg",
-      logoImg: "/palm.png"
-    }
-  ];
+  useEffect(() => {
+    const controller = new AbortController();
+    api.get('/developer', { signal: controller.signal })
+      .then(response => setDevelopers(unwrapList(response.data)))
+      .catch(fetchError => { if (fetchError.name !== 'AbortError') setError(fetchError.message || 'Unable to load developers.'); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, []);
 
   return (
     <div className="w-full bg-white text-gray-900 font-sans pb-16">
-      
-      {/* 1. Hero Banner Section matching Figma */}
-      <div className="relative w-full min-h-105 md:h-105 bg-gray-900 mb-10 sm:mb-12 overflow-hidden flex items-center justify-center py-16">
-        {/* Background Image with Overlay */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center opacity-55"
-          style={{ backgroundImage: `url('/developer-1.jpg')` }}
-        />
-        <div className="absolute inset-0 bg-linear-to-b from-black/50 via-black/40 to-black/60" />
-
-        {/* Social Icons on the left (Hidden on mobile) */}
-        <div className="absolute left-6 md:left-12 top-1/2 transform -translate-y-1/2 hidden xl:flex flex-col gap-4 text-white z-10">
-          <a href="#" className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-xs hover:bg-[#8B1E22] hover:border-[#8B1E22] transition-colors">f</a>
-          <a href="#" className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-xs hover:bg-[#8B1E22] hover:border-[#8B1E22] transition-colors">𝕏</a>
-          <a href="#" className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-xs hover:bg-[#8B1E22] hover:border-[#8B1E22] transition-colors">in</a>
-          <a href="#" className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-xs hover:bg-[#8B1E22] hover:border-[#8B1E22] transition-colors">♪</a>
-        </div>
-
-        {/* Hero Content */}
-        <div className="relative z-10 text-center px-4 sm:px-6 max-w-2xl">
-          <h1 className="font-serif font-bold text-2xl sm:text-4xl md:text-5xl text-white mb-4 tracking-wide leading-tight">
-            Defining the Future <br className="hidden sm:inline" /> Skyline.
-          </h1>
-          <p className="text-gray-200 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto">
-            Great developments require more than just capital; they require a narrative. We provide the elite marketing and specialized brokerage services needed to position your landmark projects in front of the world's most discerning buyers.
-          </p>
-        </div>
+      <div className="relative w-full min-h-[21rem] md:h-[21rem] bg-gray-900 mb-10 sm:mb-12 overflow-hidden flex items-center justify-center py-16">
+        <div className="absolute inset-0 bg-cover bg-center opacity-55" style={{ backgroundImage: "url('/developer-1.jpg')" }} /><div className="absolute inset-0 bg-linear-to-b from-black/50 via-black/40 to-black/60" />
+        <div className="absolute left-6 hidden xl:flex flex-col gap-4 text-white"><a href="#" aria-label="Facebook" className="w-8 h-8 rounded-full border border-white/50 flex items-center justify-center">f</a><a href="#" aria-label="X" className="w-8 h-8 rounded-full border border-white/50 flex items-center justify-center">𝕏</a><a href="#" aria-label="Instagram" className="w-8 h-8 rounded-full border border-white/50 flex items-center justify-center">◎</a><a href="#" aria-label="TikTok" className="w-8 h-8 rounded-full border border-white/50 flex items-center justify-center">♪</a></div>
+        <div className="relative text-center max-w-2xl px-4 text-white"><h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold mb-3 tracking-wide">Defining the Future<br /> Skyline.</h1><p className="text-xs sm:text-sm text-gray-200 leading-relaxed">Great developments require more than just capital; they require a narrative. We provide the elite marketing and specialized brokerage services needed to position your landmark projects in front of the world's most discerning buyers.</p></div>
       </div>
-
-      {/* 2. Developers Grid Cards Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          {developersList.map((dev, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
-            >
-              <div>
-                {/* Card Image with Location Badge */}
-                <div className="relative h-48 sm:h-52 bg-cover bg-center" style={{ backgroundImage: `url('${dev.image}')` }}>
-                  <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] px-2.5 py-1 rounded-md font-medium">
-                    {dev.location}
-                  </span>
-                </div>
-
-                {/* Developer Info Header inside card */}
-                <div className="p-4 sm:p-5 flex items-center justify-between border-b border-gray-100">
-                  <div>
-                    <h3 className="font-serif font-bold text-sm text-gray-900 tracking-wider">
-                      {dev.name}
-                    </h3>
-                    <span className="text-[10px] text-gray-400 uppercase tracking-widest block mt-0.5">
-                      {dev.subName}
-                    </span>
-                  </div>
-
-                  <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center overflow-hidden p-1 shadow-sm shrink-0">
-                    <img src={dev.logoImg} alt={dev.name} className="w-full h-full object-contain" />
-                  </div>
-                </div>
-              </div>
-
-              {/* View Projects Button */}
-              <div className="p-4 sm:p-5 pt-0 mt-4">
-                <Link
-                  to={`/developer/${dev.id}`}
-                  className="block text-center w-full border border-[#8B1E22] text-[#8B1E22] hover:bg-[#8B1E22] hover:text-white py-2.5 rounded-xl text-xs font-semibold transition-colors shadow-sm"
-                >
-                  View Projects
-                </Link>
-              </div>
-
-            </div>
-          ))}
-        </div>
-      </div>
-
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        {loading ? <div className="text-center py-16 text-gray-500 text-sm" role="status">Loading developers...</div>
+          : error ? <div className="text-center py-16 text-red-700 text-sm" role="alert">{error}</div>
+            : developers.length === 0 ? <div className="text-center py-16 text-gray-500 text-sm">No developers are available yet.</div>
+              : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-12">
+                {developers.map((developer, index) => { const id = developer.id || developer._id; const logo = getDeveloperLogo(developer); return <article key={id || index} className="bg-white rounded-2xl overflow-hidden border border-gray-200 p-2 shadow-sm hover:shadow-md transition-shadow">
+                  <Link to={`/developer/${id}`}><img src={getDeveloperImage(developer, index)} alt={getName(developer)} className="h-40 w-full rounded-xl object-cover" /></Link>
+                  <div className="flex h-14 items-center px-3">{logo ? <img src={logo} alt={getName(developer)} className="max-h-10 max-w-36 object-contain object-left" /> : <h2 className="font-serif font-bold text-sm text-gray-900">{getName(developer)}</h2>}</div>
+                  <div className="px-1 pb-1"><Link to={`/developer/${id}`} className="block text-center w-full border border-[#8B1E22] text-[#8B1E22] hover:bg-[#8B1E22] hover:text-white py-1.5 rounded-lg text-xs font-medium transition-colors">View Projects</Link></div>
+                </article>; })}
+              </div>}
+      </section>
     </div>
   );
 }

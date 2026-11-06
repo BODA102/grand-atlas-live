@@ -1,38 +1,31 @@
-import React, { createContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import React, { createContext, useCallback, useEffect, useState } from 'react';
+import api, { unwrapList } from '../services/api';
 
-// 1. إنشاء الـ Context وتصديرها بالاسم (Named Export)
-export const PropertyContext = createContext();
+export const PropertyContext = createContext(null);
 
-// 2. إنشاء الـ Provider Component
 export function PropertyProvider({ children }) {
   const [properties, setProperties] = useState([]);
-  const [selectedType, setSelectedType] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [propertiesLoading, setPropertiesLoading] = useState(true);
+  const [propertiesError, setPropertiesError] = useState('');
 
-  useEffect(() => {
-    async function fetchProperties() {
-      try {
-        const response = await api.get('/unit');
-        setProperties(response?.data || []);
-      } catch (error) {
-        console.error('Error fetching global properties:', error);
-      }
+  const refreshProperties = useCallback(async () => {
+    setPropertiesLoading(true);
+    setPropertiesError('');
+    try {
+      const response = await api.get('/unit');
+      setProperties(unwrapList(response.data));
+    } catch (error) {
+      setProperties([]);
+      setPropertiesError(error.message || 'Could not load properties.');
+    } finally {
+      setPropertiesLoading(false);
     }
-    fetchProperties();
   }, []);
 
+  useEffect(() => { refreshProperties(); }, [refreshProperties]);
+
   return (
-    <PropertyContext.Provider
-      value={{
-        properties,
-        setProperties,
-        selectedType,
-        setSelectedType,
-        searchTerm,
-        setSearchTerm
-      }}
-    >
+    <PropertyContext.Provider value={{ properties, propertiesLoading, propertiesError, refreshProperties }}>
       {children}
     </PropertyContext.Provider>
   );

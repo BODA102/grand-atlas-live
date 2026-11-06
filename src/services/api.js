@@ -1,71 +1,81 @@
-const USE_MOCK_DATA = true;
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
 
-const BASE_URL = 'https://white-seahorse-266682.hostingerulessite.com/api/v1';
+async function request(endpoint, { method = 'GET', body, signal } = {}) {
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('grandAtlasToken') : null;
+  const response = await fetch(`${BASE_URL}${path}`, {
+    method,
+    signal,
+    headers: {
+      ...(body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
+  });
+
+  const contentType = response.headers.get('content-type') || '';
+  const data = contentType.includes('application/json') ? await response.json() : await response.text();
+  if (!response.ok) {
+    const error = new Error(data?.message || data?.error || `Request failed (${response.status})`);
+    error.status = response.status;
+    error.data = data;
+    throw error;
+  }
+  return { data };
+}
 
 const api = {
-  get: async (endpoint) => {
-    if (USE_MOCK_DATA) {
-
-      if (endpoint.includes('/unit')) {
-        return { 
-          data: [
-            { id: 1, title: 'Palm Hills Office No. 3', price: '5,000,000', bedrooms: 3, bathrooms: 2, area: '180m²', image: '/unit-img.jpg', status: 'Available' },
-            { id: 2, title: 'Hacienda Duplex No. 4', price: '7,500,000', bedrooms: 4, bathrooms: 3, area: '220m²', image: '/unit-img.jpg', status: 'Available' },
-            { id: 3, title: 'Sawary Family Villa', price: '12,000,000', bedrooms: 5, bathrooms: 4, area: '350m²', image: '/unit-img.jpg', status: 'Available' }
-          ] 
-        };
-      }
-      if (endpoint.includes('/zone')) {
-        return { 
-          data: [
-            { id: 1, name: 'Historic Cairo', properties_count: '12 Properties', image: '/zone-cairo.jpg' },
-            { id: 2, name: 'Alexandria Coast', properties_count: '9 Properties', image: '/zone-alex.jpg' }
-          ] 
-        };
-      }
-      return { data: [] };
-    }
-
-    try {
-      const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-      const response = await fetch(`${BASE_URL}${cleanEndpoint}`);
-
-      if (!response.ok) {
-        return { data: null };
-      }
-
-      const data = await response.json();
-      return { data };
-    } catch (error) {
-      return { data: null };
-    }
-  },
-
-  post: async (endpoint, body) => {
-    if (USE_MOCK_DATA) {
-      return { data: { success: true, message: "Mock success" } };
-    }
-
-    try {
-      const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-      const response = await fetch(`${BASE_URL}${cleanEndpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        return { data: null };
-      }
-
-      const data = await response.json();
-      return { data };
-    } catch (error) {
-      return { data: null };
-    }
-  }
+  get: (endpoint, options = {}) => request(endpoint, options),
+  post: (endpoint, body, options = {}) => request(endpoint, { ...options, method: 'POST', body }),
+  patch: (endpoint, body, options = {}) => request(endpoint, { ...options, method: 'PATCH', body }),
+  delete: (endpoint, options = {}) => request(endpoint, { ...options, method: 'DELETE' }),
 };
+
+export function unwrapList(payload) {
+  let current = payload;
+  for (let depth = 0; depth < 4; depth += 1) {
+    if (Array.isArray(current)) return current;
+    current = current?.data ?? current?.items ?? current?.results;
+  }
+  return [];
+}
+
+export function unwrapItem(payload) {
+  let current = payload;
+  for (let depth = 0; depth < 4; depth += 1) {
+    if (!current?.data || Array.isArray(current.data)) break;
+    current = current.data;
+  }
+  return current;
+}
+
+export function getName(item) {
+  return item?.name_en || item?.title_en || item?.name || item?.title || 'Untitled';
+}
+
+export function getDescription(item) {
+  return item?.description_en || item?.description || '';
+}
+
+export function getImage(item, fallback = '/unit-img.jpg') {
+  const images = item?.images;
+  const image = item?.image || item?.imageUrl || item?.coverImage || (Array.isArray(images) ? images[0] : images);
+  return typeof image === 'string' && image ? image : fallback;
+}
+
+export function getDeveloperImage(developer, index = 0) {
+  const name = `${developer?.name_en || ''} ${developer?.name_ar || ''}`.toLowerCase();
+  if (name.includes('palm')) return '/developer-palm-hills.png';
+  if (name.includes('rash') || name.includes('راشد') || name.includes('الراشدي')) return '/developer-office.png';
+  return index % 2 === 0 ? '/developer-residence.png' : '/developer-office.png';
+}
+
+export function getDeveloperLogo(developer) {
+  const name = `${developer?.name_en || ''} ${developer?.name_ar || ''}`.toLowerCase();
+  if (name.includes('palm')) return '/palm.png';
+  if (name.includes('hayah')) return '/Hayah.png';
+  return '';
+}
 
 export default api;

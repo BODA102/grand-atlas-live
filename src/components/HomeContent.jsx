@@ -1,28 +1,27 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
 import { PropertyContext } from '../context/PropertyContext';
+import api, { getImage, getName, unwrapList } from '../services/api';
 
 export default function HomeContent() {
   const contextData = useContext(PropertyContext);
 
-  const [masterpieces, setMasterpieces] = useState([]);
+  const masterpieces = contextData?.properties?.slice(0, 3) || [];
+  const pricedProperties = contextData?.properties?.filter(property => property.price != null && Number.isFinite(Number(property.price))) || [];
+  const totalListedValue = pricedProperties.reduce((total, property) => total + Number(property.price), 0);
+  const totalListedValueLabel = totalListedValue >= 1_000_000
+    ? `${(totalListedValue / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 1 })}M`
+    : totalListedValue.toLocaleString();
   const [landmarks, setLandmarks] = useState([]);
+  const [landmarksLoading, setLandmarksLoading] = useState(true);
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const res = await api.get('/unit');
-        const data = res?.data || [];
-        if (Array.isArray(data) && data.length > 0) {
-          setMasterpieces(data.slice(0, 3));
-          setLandmarks(data.slice(0, 3));
-        }
-      } catch (err) {
-        console.error('Error fetching units:', err);
-      }
-    }
-    loadData();
+    const controller = new AbortController();
+    api.get('/projects/all-projects', { signal: controller.signal })
+      .then(response => setLandmarks(unwrapList(response.data).slice(0, 3)))
+      .catch(error => { if (error.name !== 'AbortError') setLandmarks([]); })
+      .finally(() => { if (!controller.signal.aborted) setLandmarksLoading(false); });
+    return () => controller.abort();
   }, []);
 
   return (
@@ -30,7 +29,7 @@ export default function HomeContent() {
 
       {/* 1. HERO SECTION */}
       <section
-        className="relative w-full min-h-125 md:h-145 bg-cover bg-center flex items-center justify-center text-white px-4 sm:px-6 py-20"
+        className="relative w-full min-h-122 md:h-104 bg-cover bg-center flex items-center justify-center text-white px-4 sm:px-6 py-20"
         style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/hero-bg.jpg')` }}
       >
         {/* Social Links Side Bar (Hidden on Mobile) */}
@@ -52,7 +51,7 @@ export default function HomeContent() {
           <div className="flex justify-center items-center w-full">
             <Link to="/units">
               <button className="bg-[#8B1E22] text-white px-8 py-3 rounded-full font-medium hover:bg-[#6b171a] transition-all shadow-lg text-xs sm:text-sm tracking-wider uppercase">
-                Explore Properties
+                Explore
               </button>
             </Link>
           </div>
@@ -69,22 +68,22 @@ export default function HomeContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
             <span className="text-2xl mb-2 block text-[#8B1E22]">📋</span>
-            <h3 className="font-bold text-2xl text-gray-900">{contextData?.properties?.length || 45}</h3>
+            <h3 className="font-bold text-2xl text-gray-900">{contextData?.propertiesLoading ? '…' : contextData?.properties?.length ?? 0}</h3>
             <p className="text-xs text-gray-500 mt-1">Properties Managed</p>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
             <span className="text-2xl mb-2 block text-[#8B1E22]">💰</span>
-            <h3 className="font-bold text-2xl text-gray-900">70M</h3>
-            <p className="text-xs text-gray-500 mt-1">Total Managed Investment (EGP)</p>
+            <h3 className="font-bold text-2xl text-gray-900">{contextData?.propertiesLoading ? '…' : pricedProperties.length ? totalListedValueLabel : '—'}</h3>
+            <p className="text-xs text-gray-500 mt-1">Total Listed Property Value (EGP)</p>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
             <span className="text-2xl mb-2 block text-[#8B1E22]">😀</span>
-            <h3 className="font-bold text-2xl text-gray-900">500</h3>
+            <h3 className="font-bold text-2xl text-gray-900">—</h3>
             <p className="text-xs text-gray-500 mt-1">Happy Clients</p>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
             <span className="text-2xl mb-2 block text-[#8B1E22]">🎯</span>
-            <h3 className="font-bold text-2xl text-gray-900">99%</h3>
+            <h3 className="font-bold text-2xl text-gray-900">—</h3>
             <p className="text-xs text-gray-500 mt-1">Client Satisfaction</p>
           </div>
         </div>
@@ -99,11 +98,11 @@ export default function HomeContent() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
           <div className="flex justify-center">
-            <div className="w-full max-w-sm sm:max-w-md h-72 sm:h-96 border-2 border-[#8B1E22] rounded-t-[120px] sm:rounded-t-[140px] rounded-b-2xl overflow-hidden shadow-sm p-2">
+            <div className="w-full max-w-sm sm:max-w-md h-72 sm:h-122 border-2 border-[#8B1E22] rounded-t-[120px] sm:rounded-t-[130px] rounded-b-2xl overflow-hidden shadow-sm">
               <img src="/about-img.jpg" alt="About Grand Atlas" className="w-full h-full object-cover rounded-t-[110px] sm:rounded-t-[130px] rounded-xl" />
             </div>
           </div>
-          <div className="space-y-4 text-xs sm:text-sm text-gray-600 leading-relaxed text-center md:text-left">
+          <div className="space-y-1 text-xs sm:text-sm text-gray-600 leading-relaxed text-center md:text-left">
             <p>
               We began with a singular, uncompromising vision: to bridge the gap between world-class architecture and the individuals who define our global culture. We recognized that for the discerning client, a home is rarely just a physical structure; it is a curated environment, a private gallery, and the ultimate expression of a life well-lived.
             </p>
@@ -113,7 +112,7 @@ export default function HomeContent() {
             <p>
               We don’t just find you a home; we secure your peace of mind through a veil of absolute professional confidentiality.
             </p>
-            <div className="pt-2 flex justify-center md:justify-start">
+            <div className="pt-11 flex justify-center md:justify-start">
               <Link
                 to="/contact"
                 className="inline-flex items-center gap-2 bg-[#8B1E22] hover:bg-[#6b171a] text-white text-xs font-medium px-6 py-2.5 rounded-md transition-colors shadow-sm"
@@ -133,12 +132,12 @@ export default function HomeContent() {
           </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {(masterpieces.length > 0 ? masterpieces : [1, 2, 3]).map((item, idx) => {
-            const imgPath = typeof item === 'object' ? item.image : `/masterpiece-${idx + 1}.jpg`;
-            const title = typeof item === 'object' ? item.title : idx === 0 ? 'Palm Hills Office No. 3' : idx === 1 ? 'Hacienda Duplex No. 4' : 'Sawary Family Villa';
+          {contextData?.propertiesLoading ? <p className="col-span-full text-center text-sm text-gray-500">Loading featured properties...</p> : masterpieces.length === 0 ? <p className="col-span-full text-center text-sm text-gray-500">No featured properties are available yet.</p> : masterpieces.map((item, idx) => {
+            const imgPath = getImage(item, `/masterpiece-${idx + 1}.jpg`);
+            const title = getName(item);
             
             return (
-              <div key={idx} className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
+              <Link to={`/unit/${item.id || item._id}`} key={item.id || item._id || idx} className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow">
                 <div
                   className="h-48 sm:h-52 bg-cover bg-center rounded-lg mb-3"
                   style={{ backgroundImage: `url('${imgPath || `/masterpiece-${idx + 1}.jpg`}')` }}
@@ -146,7 +145,7 @@ export default function HomeContent() {
                 <h3 className="font-serif font-bold text-sm text-gray-900 px-1">
                   0{idx + 1}. {title}
                 </h3>
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -172,9 +171,9 @@ export default function HomeContent() {
           </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {(landmarks.length > 0 ? landmarks : [1, 2, 3]).map((item, idx) => {
-            const imgPath = typeof item === 'object' ? item.image : `/unit-img.jpg`;
-            const name = typeof item === 'object' ? item.title : idx === 1 ? 'New Giza' : 'Palm Hills';
+          {landmarksLoading ? <p className="col-span-full text-center text-sm text-gray-500">Loading projects...</p> : landmarks.length === 0 ? <p className="col-span-full text-center text-sm text-gray-500">No projects are available yet.</p> : landmarks.map((item, idx) => {
+            const imgPath = getImage(item);
+            const name = getName(item);
             
             return (
               <div key={idx} className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
@@ -184,7 +183,7 @@ export default function HomeContent() {
                     style={{ backgroundImage: `url('${imgPath || '/zone-1.jpg'}')` }}
                   >
                     <span className="absolute top-3 right-3 bg-[#8B1E22] text-white text-[10px] px-2.5 py-0.5 rounded-full font-medium">
-                      {idx === 1 ? 'New Cairo' : 'Palm Hills'}
+                      {item.zone?.name_en || item.zone?.name || 'Featured'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mb-1 px-1">
@@ -193,7 +192,7 @@ export default function HomeContent() {
                   </div>
                 </div>
                 <Link
-                  to={`/unit/${typeof item === 'object' ? item.id : idx + 1}`}
+                  to={`/project/${item.id || item._id}`}
                   className="block text-center w-full border border-gray-300 hover:border-[#8B1E22] text-gray-700 hover:text-[#8B1E22] text-xs py-2 rounded-lg font-medium transition-colors mt-4"
                 >
                   View Details

@@ -11,6 +11,7 @@ import ProjectDetail from './components/ProjectDetail';
 import Developers from './components/Developers';
 import DeveloperDetail from './components/DeveloperDetail';
 import ContactContent from './components/ContactContent';
+import AuthPage from './components/AuthPage';
 
 export default function App() {
   return (
@@ -28,6 +29,8 @@ export default function App() {
             <Route path="/developers" element={<Developers />} />
             <Route path="/developer/:id" element={<DeveloperDetail />} />
             <Route path="/contact" element={<ContactContent />} />
+            <Route path="/login" element={<AuthPage />} />
+            <Route path="/register" element={<AuthPage />} />
           </Routes>
         </main>
         <Footer />

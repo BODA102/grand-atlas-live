@@ -1,40 +1,33 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
-import { PropertyContext } from '../context/PropertyContext';
+import { getDescription, getImage, getName, unwrapItem } from '../services/api';
 
 const defaultHeroImg = "/detail-hero.jpg";
-const galleryImages = [
-  "/detail-1.jpg",
-  "/detail-2.jpg",
-  "/detail-3.jpg",
-  "/detail-4.jpg",
-  "/detail-5.jpg"
-];
-
 export default function DisplayUnit() {
-  const data = useContext(PropertyContext);
-
   const { id } = useParams();
   const [unit, setUnit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(defaultHeroImg);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    async function getUnitDetails() {
+    async function getUnitDetails(signal) {
       try {
-        const response = await api.get(`/unit/${id}`);
-        setUnit(response?.data || null);
-        if (response?.data?.image) {
-          setActiveImg(response.data.image);
-        }
-      } catch (error) {
-        console.error("Error fetching unit details:", error);
+        const response = await api.get(`/unit/${id}`, { signal });
+        const result = unwrapItem(response.data);
+        setUnit(result);
+        const firstImage = getImage(result, '');
+        if (firstImage) setActiveImg(firstImage);
+      } catch (fetchError) {
+        if (fetchError.name !== 'AbortError') setError(fetchError.message || 'Unable to load unit details.');
       } finally {
         setLoading(false);
       }
     }
-    getUnitDetails();
+    const controller = new AbortController();
+    getUnitDetails(controller.signal);
+    return () => controller.abort();
   }, [id]);
 
   if (loading) {
@@ -45,6 +38,15 @@ export default function DisplayUnit() {
     );
   }
 
+  if (error || !unit) {
+    return <div className="min-h-[50vh] bg-white flex flex-col items-center justify-center gap-4 text-sm text-gray-600" role="alert">
+      <p>{error || 'Property not found.'}</p><Link to="/units" className="text-[#8B1E22] underline">Back to properties</Link>
+    </div>;
+  }
+
+  const images = Array.isArray(unit.images) ? unit.images.filter(image => typeof image === 'string') : [];
+  const name = getName(unit);
+
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans py-8 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -53,14 +55,14 @@ export default function DisplayUnit() {
         <div className="w-full h-72 sm:h-96 md:h-120 rounded-2xl overflow-hidden mb-4 shadow-sm border border-gray-200">
           <img 
             src={activeImg}
-            alt="Unit Showcase"
+            alt={name}
             className="w-full h-full object-cover"
           />
         </div>
 
         {/* 2. Gallery Thumbnails */}
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 sm:gap-4 mb-8 sm:mb-10">
-          {galleryImages.map((imgSrc, index) => (
+          {images.filter(image => image !== activeImg).map((imgSrc, index) => (
             <div
               key={index}
               onClick={() => setActiveImg(imgSrc)}
@@ -81,15 +83,15 @@ export default function DisplayUnit() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 mb-8 sm:mb-10 border-b border-gray-200">
           <div>
             <h1 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-              {unit?.title || "Splendid historic Art Nouveau villa"}
+              {name}
             </h1>
             <p className="text-gray-500 text-xs flex items-center gap-1.5">
               <span className="text-[#8B1E22]">📍</span>
-              {unit?.location || 'Minuso, Lake Maggiore, Switzerland — ref. LOC1771'}
+              {[unit.city_en, unit.project?.name_en, unit.project?.name].filter(Boolean).join(' · ') || 'Location not specified'}
             </p>
           </div>
           <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mt-4 md:mt-0 font-serif">
-            {unit?.price ? `${unit.price} EGP` : "50,000,000 EGP"}
+            {unit.price != null ? `${Number(unit.price).toLocaleString()} EGP` : "Contact for Price"}
           </div>
         </div>
 
@@ -104,19 +106,19 @@ export default function DisplayUnit() {
             <ul className="space-y-3 text-xs text-gray-700">
               <li className="flex justify-between border-b border-gray-200/60 pb-2.5">
                 <span className="text-gray-500">Plot size ca.:</span>
-                <span className="font-semibold text-gray-900">{unit?.plot_size || '589 m²'}</span>
+                <span className="font-semibold text-gray-900">{unit.size ? `${unit.size} m²` : '—'}</span>
               </li>
               <li className="flex justify-between border-b border-gray-200/60 pb-2.5">
                 <span className="text-gray-500">Living area ca.:</span>
-                <span className="font-semibold text-gray-900">{unit?.area || '300 m²'}</span>
+                <span className="font-semibold text-gray-900">{unit.size ? `${unit.size} m²` : '—'}</span>
               </li>
               <li className="flex justify-between border-b border-gray-200/60 pb-2.5">
                 <span className="text-gray-500">Bedrooms:</span>
-                <span className="font-semibold text-gray-900">{unit?.bedrooms || '3'}</span>
+                <span className="font-semibold text-gray-900">{unit.bedrooms ?? '—'}</span>
               </li>
               <li className="flex justify-between border-b border-gray-200/60 pb-2.5">
                 <span className="text-gray-500">Bathrooms:</span>
-                <span className="font-semibold text-gray-900">{unit?.bathrooms || '3'}</span>
+                <span className="font-semibold text-gray-900">{unit.bathrooms ?? '—'}</span>
               </li>
               <li className="flex justify-between border-b border-gray-200/60 pb-2.5">
                 <span className="text-gray-500">Living rooms:</span>
@@ -124,11 +126,11 @@ export default function DisplayUnit() {
               </li>
               <li className="flex justify-between border-b border-gray-200/60 pb-2.5">
                 <span className="text-gray-500">WC:</span>
-                <span className="font-semibold text-gray-900">1</span>
+                <span className="font-semibold text-gray-900">4</span>
               </li>
               <li className="flex justify-between pb-1">
                 <span className="text-gray-500">External parking:</span>
-                <span className="font-semibold text-gray-900">3, covered</span>
+                <span className="font-semibold text-gray-900">6</span>
               </li>
             </ul>
           </div>
@@ -137,7 +139,7 @@ export default function DisplayUnit() {
           <div className="lg:col-span-7 space-y-6">
             <h3 className="font-serif font-bold text-lg sm:text-xl text-gray-900">Overview</h3>
             <p className="text-gray-600 leading-relaxed text-xs sm:text-sm">
-              {unit?.description || 'Nestled in a residential area of Minusio, this magnificent historic villa is for sale, fully renovated and ready to move in. The spacious living areas, flooded with natural light thanks to perfect sun exposure, create a unique and welcoming atmosphere. A well-maintained, low-maintenance garden provides the ideal setting for enjoying outdoor gatherings. Its proximity to essential services and public transport also makes the villa an ideal choice for families.'}
+              {getDescription(unit) || 'No description is available for this property.'}
             </p>
 
             {/* Action Buttons (WhatsApp & Call) */}

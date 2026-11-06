@@ -14,7 +14,7 @@ export default function Footer() {
           <img src="/logo.png" alt="Grand Atlas Logo" className="h-10 object-contain" />
           <p className="text-gray-500 font-medium">+1 (7635) 547-12-97</p>
           <p className="text-gray-500 font-medium">support@lift.agency</p>
-          <p className="text-gray-400">Total System Units: {data?.properties?.length || 0}</p>
+          <p className="text-gray-400">Total System Units: {data?.propertiesLoading ? '…' : data?.properties?.length ?? 0}</p>
         </div>
 
         {/* Quick Links */}
