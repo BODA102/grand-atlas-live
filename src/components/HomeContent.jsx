@@ -78,12 +78,12 @@ export default function HomeContent() {
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
             <span className="text-2xl mb-2 block text-[#8B1E22]">😀</span>
-            <h3 className="font-bold text-2xl text-gray-900">—</h3>
+            <h3 className="font-bold text-2xl text-gray-900">500</h3>
             <p className="text-xs text-gray-500 mt-1">Happy Clients</p>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
             <span className="text-2xl mb-2 block text-[#8B1E22]">🎯</span>
-            <h3 className="font-bold text-2xl text-gray-900">—</h3>
+            <h3 className="font-bold text-2xl text-gray-900">99%</h3>
             <p className="text-xs text-gray-500 mt-1">Client Satisfaction</p>
           </div>
         </div>
