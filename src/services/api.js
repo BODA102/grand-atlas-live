@@ -1,12 +1,13 @@
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
 
-async function request(endpoint, { method = 'GET', body, signal } = {}) {
+async function request(endpoint, { method = 'GET', body, signal, cache = method === 'GET' ? 'no-store' : undefined } = {}) {
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('grandAtlasToken') : null;
   const response = await fetch(`${BASE_URL}${path}`, {
     method,
     signal,
+    ...(cache ? { cache } : {}),
     headers: {
       ...(body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -17,8 +18,16 @@ async function request(endpoint, { method = 'GET', body, signal } = {}) {
   const contentType = response.headers.get('content-type') || '';
   const data = contentType.includes('application/json') ? await response.json() : await response.text();
   if (!response.ok) {
-    const error = new Error(data?.message || data?.error || `Request failed (${response.status})`);
+    const retryAfter = response.headers.get('Retry-After');
+    const retryHint = retryAfter
+      ? (/^\d+$/.test(retryAfter) ? ` Try again in ${retryAfter} seconds.` : ` Retry after ${retryAfter}.`)
+      : ' Please wait and try again.';
+    const fallbackMessage = response.status === 429
+      ? `The API is temporarily limiting requests.${retryHint}`
+      : `Request failed (${response.status})`;
+    const error = new Error(data?.message || data?.error || fallbackMessage);
     error.status = response.status;
+    error.retryAfter = retryAfter;
     error.data = data;
     throw error;
   }

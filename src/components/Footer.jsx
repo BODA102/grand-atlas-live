@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { PropertyContext } from '../context/PropertyContext';
+import { PropertyContext } from '../context/PropertyContextValue';
 
 export default function Footer() {
   const data = useContext(PropertyContext);

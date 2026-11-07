@@ -2,6 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import api, { getDescription, getImage, getName, unwrapItem, unwrapList } from '../services/api';
 
+function matchesDeveloper(project, developer, routeId) {
+  const ids = [developer?.id, developer?._id, routeId].filter(Boolean).map(value => String(value).toLowerCase());
+  const names = [developer?.name_en, developer?.name_ar, developer?.name]
+    .filter(Boolean)
+    .map(value => String(value).trim().toLowerCase());
+
+  function relationMatches(relation) {
+    if (!relation) return false;
+    if (Array.isArray(relation)) return relation.some(relationMatches);
+    if (typeof relation === 'string' || typeof relation === 'number') {
+      const value = String(relation).trim().toLowerCase();
+      return ids.includes(value) || names.includes(value);
+    }
+    if (typeof relation === 'object') {
+      return relationMatches(relation.id || relation._id || relation.uuid || relation.developerId || relation.developer_id)
+        || relationMatches(relation.name_en || relation.name_ar || relation.name);
+    }
+    return false;
+  }
+
+  return [project.developerId, project.developer_id, project.developer, project.developers, project.developerIds, project.developer_ids]
+    .some(relationMatches);
+}
+
 export default function DeveloperDetail() {
   const { id } = useParams();
   const [developer, setDeveloper] = useState(null);
@@ -18,10 +42,9 @@ export default function DeveloperDetail() {
       .then(([developerResponse, projectsResponse]) => {
         const detail = unwrapItem(developerResponse.data);
         setDeveloper(detail);
-        setProjects(unwrapList(projectsResponse.data).filter(project => {
-          const projectDeveloper = project.developerId || project.developer_id || project.developer?.id || project.developer?._id || project.developer || '';
-          return String(projectDeveloper) === id;
-        }));
+        const allProjects = [...unwrapList(detail?.projects), ...unwrapList(projectsResponse.data)];
+        const uniqueProjects = [...new Map(allProjects.map((project, index) => [project.id || project._id || `project-${index}`, project])).values()];
+        setProjects(uniqueProjects.filter(project => matchesDeveloper(project, detail, id)));
       })
       .catch(fetchError => {
         if (fetchError.name !== 'AbortError') setError(fetchError.message || 'Unable to load developer projects.');
@@ -34,7 +57,7 @@ export default function DeveloperDetail() {
 
   return (
     <div className="w-full bg-white text-gray-900 font-sans pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-32 sm:pt-36 pb-12">
         <div className="text-center mb-8">
           <h1 className="font-serif font-bold text-2xl md:text-3xl text-gray-900 inline-block relative pb-2">
             Developers Projects

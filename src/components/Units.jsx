@@ -1,48 +1,59 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api, { getDescription, getImage, getName, unwrapList } from '../services/api';
+import { PropertyContext } from '../context/PropertyContextValue';
 
 const fieldClass = 'w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-[#8B1E22] transition-colors';
 
 export default function Units() {
-  const [units, setUnits] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const propertyContext = useContext(PropertyContext);
+  const [filteredUnits, setFilteredUnits] = useState(null);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({ bedrooms: '', bathrooms: '', developerName: '', zoneName: '', projectName: '', status: '', minPrice: '', maxPrice: '', minSize: '', maxSize: '', sort: 'asc' });
   const location = useLocation();
+  const [filters, setFilters] = useState(() => ({ bedrooms: '', bathrooms: '', developerName: '', zoneName: new URLSearchParams(location.search).get('zone') || '', projectName: '', status: '', minPrice: '', maxPrice: '', minSize: '', maxSize: '', sort: 'asc' }));
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    setFilters(current => ({ ...current, zoneName: params.get('zone') || '' }));
-  }, [location.search]);
+  const units = filteredUnits ?? propertyContext?.properties ?? [];
+  const loading = searching || (filteredUnits === null && propertyContext?.propertiesLoading);
+  const visibleError = error || (filteredUnits === null ? propertyContext?.propertiesError : '');
 
-  useEffect(() => {
-    const controller = new AbortController();
-    async function fetchUnits() {
-      setLoading(true);
-      setError('');
-      try {
-        const params = new URLSearchParams();
-        if (searchTerm.trim()) params.set('search', searchTerm.trim());
-        for (const [key, value] of Object.entries(filters)) if (value !== '') params.set(key, value);
-        const response = await api.get(`/unit${params.size ? `?${params}` : ''}`, { signal: controller.signal });
-        setUnits(unwrapList(response.data));
-      } catch (fetchError) {
-        if (fetchError.name !== 'AbortError') setError(fetchError.message || 'Unable to load properties.');
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
+  const searchUnits = async event => {
+    event.preventDefault();
+    const params = new URLSearchParams();
+    if (searchTerm.trim()) params.set('search', searchTerm.trim());
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== '' && !(key === 'sort' && value === 'asc')) params.set(key, value);
     }
-    fetchUnits();
-    return () => controller.abort();
-  }, [searchTerm, filters]);
+    if (params.size === 0) {
+      setFilteredUnits(null);
+      setError('');
+      return;
+    }
+    setSearching(true);
+    setError('');
+    try {
+      const response = await api.get(`/unit${params.size ? `?${params}` : ''}`);
+      setFilteredUnits(unwrapList(response.data));
+    } catch (fetchError) {
+      setError(fetchError.message || 'Unable to load properties.');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const resetSearch = () => {
+    setSearchTerm('');
+    setFilters({ bedrooms: '', bathrooms: '', developerName: '', zoneName: '', projectName: '', status: '', minPrice: '', maxPrice: '', minSize: '', maxSize: '', sort: 'asc' });
+    setFilteredUnits(null);
+    setError('');
+  };
 
   const updateFilter = (key, value) => setFilters(current => ({ ...current, [key]: value }));
 
   return (
     <div className="w-full bg-white text-gray-900 font-sans pb-16">
-      <div className="relative w-full h-[23.5rem] bg-gray-900 overflow-hidden flex items-center justify-center">
+      <div className="relative w-full h-94 bg-gray-900 overflow-hidden flex items-center justify-center">
         <div className="absolute inset-0 bg-cover bg-center opacity-40" style={{ backgroundImage: "url('/units-bg.jpg')" }} />
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 text-center px-4 sm:px-6 max-w-2xl text-white">
@@ -52,7 +63,7 @@ export default function Units() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <form onSubmit={event => event.preventDefault()} className="bg-white p-4 sm:p-5 rounded-2xl border border-[#8B1E22]/50 mb-8 sm:mb-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-0 items-center lg:mt-28">
+        <form onSubmit={searchUnits} className="bg-white p-4 sm:p-5 rounded-2xl border border-[#8B1E22]/50 mb-8 sm:mb-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-0 items-center lg:mt-28">
           <input type="search" placeholder="Search Property" value={searchTerm} onChange={event => setSearchTerm(event.target.value)} className={`${fieldClass} lg:rounded-r-none`} />
           <select value={filters.bedrooms} onChange={event => updateFilter('bedrooms', event.target.value)} className={`${fieldClass} lg:rounded-none`}>
             <option value="">Bedrooms</option>{[1, 2, 3, 4, 5, 6].map(value => <option key={value} value={value}>{value} Bedrooms</option>)}
@@ -77,11 +88,11 @@ export default function Units() {
               </select>
             </div>
           </details>
-          <div className="lg:col-span-6 flex justify-center py-4"><button type="submit" className="w-full sm:w-64 bg-[#8B1E22] hover:bg-[#72181b] text-white py-2.5 rounded-lg text-xs font-semibold transition-colors shadow-sm">Search</button></div>
+          <div className="lg:col-span-6 flex justify-center gap-3 py-4"><button type="submit" disabled={searching} className="w-full sm:w-64 bg-[#8B1E22] hover:bg-[#72181b] disabled:opacity-60 text-white py-2.5 rounded-lg text-xs font-semibold transition-colors shadow-sm">{searching ? 'Searching...' : 'Search'}</button><button type="button" onClick={resetSearch} className="rounded-lg border border-gray-300 px-4 text-xs text-gray-600 hover:bg-gray-50">Reset</button></div>
         </form>
 
         {loading ? <div className="text-center py-20 text-gray-500 text-sm" role="status">Loading units...</div>
-          : error ? <div className="text-center py-20 text-red-700 text-sm" role="alert">{error}</div>
+          : visibleError ? <div className="text-center py-20 text-red-700 text-sm" role="alert">{visibleError}</div>
             : units.length === 0 ? <div className="text-center py-20 text-gray-500 text-sm">No properties found matching your search.</div>
               : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                 {units.map((unit, index) => {

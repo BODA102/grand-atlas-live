@@ -6,16 +6,17 @@ export default function ProjectDetail() {
   const { id } = useParams();
   const [project, setProject] = useState(null);
   const [units, setUnits] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadedId, setLoadedId] = useState(null);
   const [error, setError] = useState('');
+  const loading = loadedId !== id;
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true); setError('');
     api.get(`/projects/${id}`, { signal: controller.signal })
       .then(async projectResponse => {
         const detail = unwrapItem(projectResponse.data);
         setProject(detail);
+        setError('');
         const projectName = getName(detail);
         try {
           const unitResponse = await api.get(`/unit?projectName=${encodeURIComponent(projectName)}`, { signal: controller.signal });
@@ -25,7 +26,7 @@ export default function ProjectDetail() {
         }
       })
       .catch(fetchError => { if (fetchError.name !== 'AbortError') setError(fetchError.message || 'Unable to load project details.'); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+      .finally(() => { if (!controller.signal.aborted) setLoadedId(id); });
     return () => controller.abort();
   }, [id]);
 

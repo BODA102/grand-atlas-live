@@ -1,28 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import { getDescription, getImage, getName, unwrapItem } from '../services/api';
+import { PropertyContext } from '../context/PropertyContextValue';
 
 const defaultHeroImg = "/detail-hero.jpg";
 export default function DisplayUnit() {
   const { id } = useParams();
+  const propertyContext = useContext(PropertyContext);
+  const propertiesRef = useRef(propertyContext?.properties || []);
   const [unit, setUnit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(defaultHeroImg);
   const [error, setError] = useState('');
+  const [usingListData, setUsingListData] = useState(false);
+
+  useEffect(() => {
+    propertiesRef.current = propertyContext?.properties || [];
+  }, [propertyContext?.properties]);
 
   useEffect(() => {
     async function getUnitDetails(signal) {
+      const listItem = propertiesRef.current.find(property => String(property.id || property._id) === String(id));
+      if (listItem) {
+        setUnit(listItem);
+        setUsingListData(true);
+        const listImage = getImage(listItem, '');
+        setActiveImg(listImage || defaultHeroImg);
+        setLoading(false);
+      } else {
+        setUnit(null);
+        setUsingListData(false);
+        setLoading(true);
+      }
+      setError('');
+
       try {
         const response = await api.get(`/unit/${id}`, { signal });
         const result = unwrapItem(response.data);
         setUnit(result);
+        setUsingListData(false);
         const firstImage = getImage(result, '');
-        if (firstImage) setActiveImg(firstImage);
+        setActiveImg(firstImage || defaultHeroImg);
       } catch (fetchError) {
-        if (fetchError.name !== 'AbortError') setError(fetchError.message || 'Unable to load unit details.');
+        if (fetchError.name !== 'AbortError') {
+          const fallback = propertiesRef.current.find(property => String(property.id || property._id) === String(id));
+          if (fallback) {
+            setUnit(fallback);
+            setUsingListData(true);
+            setError('');
+          } else {
+            setError(fetchError.message || 'Unable to load unit details.');
+          }
+        }
       } finally {
-        setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     }
     const controller = new AbortController();
@@ -50,6 +82,7 @@ export default function DisplayUnit() {
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans py-8 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {usingListData && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800" role="status">Showing the unit information already loaded from the listings because the details service is temporarily limiting requests.</p>}
         
         {/* 1. Main Showcase Image */}
         <div className="w-full h-72 sm:h-96 md:h-120 rounded-2xl overflow-hidden mb-4 shadow-sm border border-gray-200">
@@ -105,11 +138,7 @@ export default function DisplayUnit() {
             </h3>
             <ul className="space-y-3 text-xs text-gray-700">
               <li className="flex justify-between border-b border-gray-200/60 pb-2.5">
-                <span className="text-gray-500">Plot size ca.:</span>
-                <span className="font-semibold text-gray-900">{unit.size ? `${unit.size} m²` : '—'}</span>
-              </li>
-              <li className="flex justify-between border-b border-gray-200/60 pb-2.5">
-                <span className="text-gray-500">Living area ca.:</span>
+                <span className="text-gray-500">Size:</span>
                 <span className="font-semibold text-gray-900">{unit.size ? `${unit.size} m²` : '—'}</span>
               </li>
               <li className="flex justify-between border-b border-gray-200/60 pb-2.5">
@@ -120,17 +149,9 @@ export default function DisplayUnit() {
                 <span className="text-gray-500">Bathrooms:</span>
                 <span className="font-semibold text-gray-900">{unit.bathrooms ?? '—'}</span>
               </li>
-              <li className="flex justify-between border-b border-gray-200/60 pb-2.5">
-                <span className="text-gray-500">Living rooms:</span>
-                <span className="font-semibold text-gray-900">2</span>
-              </li>
-              <li className="flex justify-between border-b border-gray-200/60 pb-2.5">
-                <span className="text-gray-500">WC:</span>
-                <span className="font-semibold text-gray-900">4</span>
-              </li>
               <li className="flex justify-between pb-1">
-                <span className="text-gray-500">External parking:</span>
-                <span className="font-semibold text-gray-900">6</span>
+                <span className="text-gray-500">Status:</span>
+                <span className="font-semibold text-gray-900">{unit.status || '—'}</span>
               </li>
             </ul>
           </div>
